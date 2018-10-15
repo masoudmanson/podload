@@ -19,13 +19,14 @@ var CHAT_ACTIONS = {
     CHAT_READY: 1,
     GET_THREADS: 2,
     CREATE_THREAD: 3,
-    SEND_MESSAGE: 4
+    SEND_MESSAGE: 4,
+    GET_HISTORY: 5
   },
   USERS = [];
 
 program.version("1.1.0")
   .option("-w, --workers-count [count]", "Workers Count")
-  .option("-a, --action <type>", "Chat Action (chatReady|getThreads|createThread|sendMessage)", /^(chatReady|getThreads|createThread|sendMessage)$/i)
+  .option("-a, --action <type>", "Chat Action (chatReady|getThreads|getHistory|createThread|sendMessage)", /^(chatReady|getThreads|getHistory|createThread|sendMessage)$/i)
   .option("-c, --action-count [actionCount]", "Action repeat Count")
   .option("-t, --action-timeout <actionTimeout>", "Action Timeout in Seconds")
   .option("--auto-reconnect", "Reconnect Socket On close")
@@ -105,6 +106,9 @@ if (cluster.isMaster) {
       if (statistics.sendMessage) {
         if ((statistics.sendMessage.passed + statistics.sendMessage.failed) > 0) statistics.sendMessage.meanTime = Math.ceil(statistics.sendMessage.totalTime / (statistics.sendMessage.passed + statistics.sendMessage.failed));
       }
+      if (statistics.getHistory) {
+        if ((statistics.getHistory.passed + statistics.getHistory.failed) > 0) statistics.getHistory.meanTime = Math.ceil(statistics.getHistory.totalTime / (statistics.getHistory.passed + statistics.getHistory.failed));
+      }
       console.log(statistics);
     }
   });
@@ -142,6 +146,10 @@ if (cluster.isMaster) {
 
         case CHAT_ACTIONS.SEND_MESSAGE:
           masterFunctions.masterSendMessage(content, statistics);
+          break;
+
+        case CHAT_ACTIONS.GET_HISTORY:
+          masterFunctions.masterGetHistory(content, statistics);
           break;
 
         default:
@@ -207,6 +215,10 @@ if (cluster.isMaster) {
 
           case "sendMessage":
             workerFunctions.workerSendMessage(chatAgent, process, chatReadyStartTime);
+            break;
+
+          case "getHistory":
+            workerFunctions.workerGetHistory(chatAgent, process, chatReadyStartTime);
             break;
 
           default:
